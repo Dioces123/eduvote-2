@@ -53,7 +53,7 @@ class Contestant(models.Model):
     )
 
     name = models.CharField(max_length=100)
-    code = models.CharField(max_length=10, unique=True, blank=True)
+    code = models.CharField(max_length=10, unique=True, null=True, blank=True)
     photo = models.ImageField(upload_to="contestants/")
     bio = models.TextField(blank=True)
     total_votes = models.PositiveIntegerField(default=0)
