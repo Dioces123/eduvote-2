@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container text-center mt-5">
+
+<h2 class="mb-4">Processing Payment</h2>
+
+<div class="spinner-border text-success" role="status"></div>
+
+<p class="mt-4">
+Your vote request has been received.
+</p>
+
+<p>
+Complete the payment on your phone to finish voting.
+</p>
+
+<p class="text-muted">
+Transaction Reference: {{ reference }}
+</p>
+
+</div>
+
+{% endblock %}

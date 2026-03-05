@@ -20,18 +20,38 @@
 
         {% for contestant in category.contestants.all|dictsortreversed:"total_votes" %}
 
-        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-            <span>
-                {% if forloop.counter == 1 %} 🥇
-                {% elif forloop.counter == 2 %} 🥈
-                {% elif forloop.counter == 3 %} 🥉
-                {% endif %}
-                {{ contestant.name }}
-            </span>
+        <div class="border-bottom py-3">
 
-            <span class="badge bg-primary">
-                {{ contestant.total_votes }} Votes
-            </span>
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+                    {% if forloop.counter == 1 %} 🥇
+                    {% elif forloop.counter == 2 %} 🥈
+                    {% elif forloop.counter == 3 %} 🥉
+                    {% endif %}
+
+                    <strong>{{ contestant.name }}</strong><br>
+                    <small class="text-muted">Code: {{ contestant.code }}</small>
+                </div>
+
+                <div class="text-end">
+                    <span class="badge bg-primary">
+                        {{ contestant.total_votes }} Votes
+                    </span><br>
+                    <small class="text-success fw-bold">
+                        {{ contestant.percentage }}%
+                    </small>
+                </div>
+
+            </div>
+
+            <div class="progress mt-2" style="height: 8px;">
+                <div class="progress-bar bg-success"
+                     role="progressbar"
+                     style="width: {{ contestant.percentage }}%;">
+                </div>
+            </div>
+
         </div>
 
         {% empty %}

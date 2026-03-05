@@ -16,6 +16,12 @@ from django.shortcuts import render
 from .models import Event, Vote, Contestant
 from .models import Category
 
+#.....HUBTEL.....#
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Contestant, Payment
+from django.conf import settings
+import requests
+
 
 def event_list(request):
     now = timezone.now()
@@ -140,6 +146,16 @@ def public_results(request, event_id):
 
     categories = event.categories.prefetch_related('contestants')
 
+    for category in categories:
+        contestants = category.contestants.all()
+        total_votes = sum(c.total_votes for c in contestants)
+
+        for contestant in contestants:
+            if total_votes > 0:
+                contestant.percentage = round((contestant.total_votes / total_votes) * 100, 2)
+            else:
+                contestant.percentage = 0
+
     return render(request, 'voting/public_results.html', {
         'event': event,
         'categories': categories
@@ -159,3 +175,55 @@ def privacy_policy(request):
 
 def terms_of_service(request):
     return render(request, "terms.html")
+
+def initiate_payment(request, contestant_id):
+    contestant = get_object_or_404(Contestant, id=contestant_id)
+
+    if request.method == "POST":
+        phone = request.POST.get("phone")
+        amount = float(request.POST.get("amount"))
+
+        # Define votes logic (example: 1 GHS = 1 vote)
+        votes = int(amount)
+
+        payment = Payment.objects.create(
+            contestant=contestant,
+            phone=phone,
+            amount=amount,
+            votes=votes
+        )
+
+        # 🔥 HUBTEL INTEGRATION PLACEHOLDER
+        # When Hubtel gives credentials, replace below
+
+        hubtel_payload = {
+            "amount": amount,
+            "customerNumber": phone,
+            "description": f"Vote for {contestant.name}",
+            "callbackUrl": settings.SITE_URL + "/payment/callback/",
+            "returnUrl": settings.SITE_URL + "/payment/verify/" + str(payment.reference)
+        }
+
+        # For now simulate redirect
+        return redirect("payment_processing", payment.reference)
+
+    return redirect("home")
+
+def payment_processing(request, reference):
+    payment = get_object_or_404(Payment, reference=reference)
+    return render(request, "voting/payment_processing.html", {"payment": payment})
+
+def verify_payment(request, reference):
+    payment = get_object_or_404(Payment, reference=reference)
+
+    # 🔥 HERE we will verify with Hubtel API later
+
+    # For now simulate success
+    payment.status = "successful"
+    payment.save()
+
+    # Add votes
+    payment.contestant.total_votes += payment.votes
+    payment.contestant.save()
+
+    return redirect("vote_success")

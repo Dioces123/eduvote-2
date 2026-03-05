@@ -14,4 +14,7 @@ urlpatterns = [
     path('contact/', views.contact, name='contact'),
     path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
     path('terms/', views.terms_of_service, name='terms'),
+    path("payment/initiate/<int:contestant_id>/", views.initiate_payment, name="initiate_payment"),
+    path("payment/processing/<uuid:reference>/", views.payment_processing, name="payment_processing"),
+    path("payment/verify/<uuid:reference>/", views.verify_payment, name="verify_payment"),
 ]

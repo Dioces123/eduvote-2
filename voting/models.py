@@ -12,6 +12,7 @@ from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import sys
 
+
 class Event(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -52,35 +53,19 @@ class Contestant(models.Model):
     )
 
     name = models.CharField(max_length=100)
+    code = models.CharField(max_length=10, unique=True, blank=True)
     photo = models.ImageField(upload_to="contestants/")
     bio = models.TextField(blank=True)
-
     total_votes = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        if self.photo:
-            img = Image.open(self.photo)
-
-            # Convert to RGB (important for PNGs)
-            if img.mode != "RGB":
-                img = img.convert("RGB")
-
-            # Resize (max 800x800)
-            img.thumbnail((800, 800))
-
-            buffer = BytesIO()
-            img.save(buffer, format="JPEG", quality=70)
-            buffer.seek(0)
-
-            self.photo = InMemoryUploadedFile(
-                buffer,
-                "ImageField",
-                f"{self.photo.name.split('.')[0]}.jpg",
-                "image/jpeg",
-                sys.getsizeof(buffer),
-                None
-            )
-
+        if not self.code:
+            unique = False
+            while not unique:
+                new_code = f"C{uuid.uuid4().hex[:4].upper()}"
+                if not Contestant.objects.filter(code=new_code).exists():
+                    self.code = new_code
+                    unique = True
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -133,4 +118,22 @@ class Vote(models.Model):
 
     def __str__(self):
         return f"{self.phone_number} - {self.contestant.name} - {self.status}"
+
+class Payment(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('successful', 'Successful'),
+        ('failed', 'Failed'),
+    )
+
+    reference = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    contestant = models.ForeignKey('Contestant', on_delete=models.CASCADE)
+    phone = models.CharField(max_length=20)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    votes = models.IntegerField(default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.reference} - {self.status}"
 
